@@ -12,9 +12,6 @@ contextBridge.exposeInMainWorld('api', {
     // Temporizados
     getTemporizados: () => ipcRenderer.invoke('get-temporizados'),
     saveTemporizado: (data) => ipcRenderer.invoke('save-temporizado', data),
-    
-    // Utilitários
-    exportarDados: (dados) => ipcRenderer.invoke('exportar-excel', dados), // Sugestão futura
 
     // Valores
     getValores: () => ipcRenderer.invoke('get-valores'),
@@ -24,5 +21,6 @@ contextBridge.exposeInMainWorld('api', {
     getEsquecidos: () => ipcRenderer.invoke('get-esquecidos'),
     saveEsquecido: (data) => ipcRenderer.invoke('save-esquecido', data),
     deleteEsquecido: (id) => ipcRenderer.invoke('delete-esquecido', id)
+
 
 });
