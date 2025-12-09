@@ -139,4 +139,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('modal-historico').style.display = 'none';
         }
     };
+
+    // 1. Filtro de Busca
+window.filtrarArmarios = () => {
+    const filtro = document.getElementById('search').value.toLowerCase().trim();
+    for (let i = 1; i <= 300; i++) {
+        const nome = (document.getElementById(`nome-${i}`)?.value || '').toLowerCase();
+        const prontuario = (document.getElementById(`prontuario-${i}`)?.value || '').toLowerCase();
+        const div = document.getElementById(`armario-${i}`);
+        
+        if (div) {
+            // Se filtro vazio, mostra tudo. Se não, busca nome ou prontuário
+            div.style.display = (filtro === '' || nome.includes(filtro) || prontuario.includes(filtro)) ? 'flex' : 'none';
+        }
+    }
+};
+
+// 2. Exportação (Recuperando dados da tela para o Excel)
+window.exportarDados = async () => {
+    const dados = [];
+    
+    // Varre os inputs da tela (que já estão sincronizados com o banco ao carregar)
+    for (let i = 1; i <= 300; i++) {
+        const nome = document.getElementById(`nome-${i}`)?.value;
+        const prontuario = document.getElementById(`prontuario-${i}`)?.value;
+        const status = document.getElementById(`armario-${i}`)?.classList.contains('emprestado') ? 'Em Uso' : 'Livre';
+        
+        if (nome || prontuario) {
+            dados.push({ Armário: i, Nome: nome, Prontuário: prontuario, Status: status });
+        }
+    }
+
+    if (dados.length === 0) return alert("Nada para exportar.");
+
+    // Usa a biblioteca XLSX já importada no HTML
+    const ws = XLSX.utils.json_to_sheet(dados);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Armários");
+    XLSX.writeFile(wb, "Controle_Armarios.xlsx");
+};
+
 });
