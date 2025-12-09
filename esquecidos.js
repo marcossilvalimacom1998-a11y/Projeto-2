@@ -103,6 +103,31 @@ document.addEventListener('DOMContentLoaded', async () => {
           alert('Erro ao remover do banco.');
       }
     }
+
+    if (confirm("Tem certeza que deseja descartar/entregar este item?")) {
+  try {
+      // 1. Salvar no histórico ANTES de deletar
+      const item = esquecidos[id];
+      if (item) {
+          await window.api.addHistorico('esquecido', id, 'Descarte/Entrega', { 
+              nome: item.nome, 
+              prontuario: item.prontuario,
+              itens: item.itens
+          });
+      }
+
+      // 2. Deletar
+      await window.api.deleteEsquecido(id);
+      delete esquecidos[id];
+      criarArmariosEsquecidos();
+      
+      // ... limpar campos ...
+  } catch (err) {
+      console.error(err);
+      alert('Erro ao remover do banco.');
+  }
+}
+    
   };
 
   window.filtrarEsquecidos = () => {
@@ -150,4 +175,5 @@ window.exportarEsquecidos = () => {
 };
   
 });
+
 
