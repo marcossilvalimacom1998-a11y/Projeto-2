@@ -50,15 +50,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const dados = { id, nome, prontuario, itens, data: Date.now() };
-    await window.api.saveValor(dados);
     
-    // Você pode precisar implementar o 'addHistorico' no main.js/database.js para esta chamada funcionar
-    // await window.api.addHistorico('valor', id, 'Guardou', dados);
-    
-    // Atualiza localmente para feedback rápido
-    armarios[id] = dados;
-    document.getElementById(`valor-${id}`).classList.add('guardado');
-    alert('Item guardado com sucesso!');
+    try {
+        await window.api.saveValor(dados);
+        // DESCOMENTADO: Agora salva o histórico corretamente
+        await window.api.addHistorico('valor', id, 'Guardou', dados);
+        
+        // Atualiza localmente
+        armarios[id] = dados;
+        document.getElementById(`valor-${id}`).classList.add('guardado');
+        alert('Item guardado com sucesso!');
+    } catch (e) {
+        console.error(e);
+        alert('Erro ao salvar.');
+    }
   };
 
   window.devolverValor = async (id) => {
@@ -69,21 +74,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const dados = { id, status: 'devolvido', devolver: devolverPara };
-    await window.api.saveValor(dados); // Atualiza status no banco
-    // await window.api.addHistorico('valor', id, 'Devolveu', { ...armarios[id], devolvido_a: devolverPara });
     
-    // Limpa UI
-    delete armarios[id];
-    criarArmarios();
+    try {
+        await window.api.saveValor(dados);
+        // DESCOMENTADO: Registra quem recebeu a devolução
+        await window.api.addHistorico('valor', id, 'Devolveu', { ...armarios[id], devolvido_a: devolverPara });
+        
+        // Limpa UI
+        delete armarios[id];
+        criarArmarios();
+    } catch (e) {
+        console.error(e);
+        alert('Erro ao devolver.');
+    }
   };
 
-  // Implemente window.consultarHistorico no script principal ou aqui
-  window.historicoValor = (id) => alert("Funcionalidade de histórico deve ser conectada ao banco."); 
-  
-  criarArmarios();
-
-  // Substitua a linha do alert window.historicoValor por:
-window.historicoValor = async (id) => {
+  window.historicoValor = async (id) => {
     try {
         const historico = await window.api.getHistorico('valor', id);
         
@@ -102,7 +108,7 @@ window.historicoValor = async (id) => {
             conteudo += `[${dataFormatada}] - ${h.acao.toUpperCase()}\n`;
             conteudo += `Nome: ${det.nome || '-'} | Pront: ${det.prontuario || '-'}\n`;
             conteudo += `Itens: ${det.itens || '-'}\n`;
-            if (det.devolver) conteudo += `Devolvido a: ${det.devolver}\n`;
+            if (det.devolvido_a) conteudo += `Devolvido a: ${det.devolvido_a}\n`;
             conteudo += `--------------------------\n`;
         });
 
@@ -112,9 +118,9 @@ window.historicoValor = async (id) => {
         console.error(e);
         alert('Erro ao buscar histórico.');
     }
-};
+  };
 
-window.exportarValores = () => {
+  window.exportarValores = () => {
     const dados = [];
     for (let i = 1; i <= 300; i++) {
         const nome = document.getElementById(`nome-valor-${i}`)?.value;
@@ -133,6 +139,25 @@ window.exportarValores = () => {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Valores");
     XLSX.writeFile(wb, "Pertences_Valor.xlsx");
-};
+  };
 
+  // ADICIONADO: Função de filtro que faltava
+  window.filtrarValores = () => {
+    const filtro = document.getElementById('search-valores').value.toLowerCase().trim();
+    for (let i = 1; i <= 300; i++) {
+        const div = document.getElementById(`valor-${i}`);
+        if (!div) continue;
+
+        const nome = (document.getElementById(`nome-valor-${i}`)?.value || '').toLowerCase();
+        const prontuario = (document.getElementById(`prontuario-valor-${i}`)?.value || '').toLowerCase();
+        
+        if (filtro === '' || nome.includes(filtro) || prontuario.includes(filtro)) {
+            div.style.display = 'flex';
+        } else {
+            div.style.display = 'none';
+        }
+    }
+  };
+
+  criarArmarios();
 });
