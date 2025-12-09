@@ -1,81 +1,126 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const container = document.getElementById('armarios-valores');
+  const container = document.getElementById('armarios-esquecidos');
   
-  // Carregar do Banco de Dados
-  const dadosBanco = await window.api.getValores();
-  const armarios = {};
+  // 1. Carregar dados do Banco de Dados (SQLite)
+  const dadosBanco = await window.api.getEsquecidos();
+  const esquecidos = {};
   dadosBanco.forEach(item => {
-      // Filtra apenas os que estão guardados para exibir na grade ativa
-      if(item.status === 'guardado') armarios[item.id] = item;
+      esquecidos[item.id] = item;
   });
 
-  function criarArmarios() {
+  function criarArmariosEsquecidos() {
     container.innerHTML = '';
-    for (let i = 1; i <= 300; i++) {
+    // Reduzi para 30 ou o número que preferir, para não pesar a tela
+    for (let i = 1; i <= 40; i++) { 
       const div = document.createElement('div');
       div.className = 'armario';
-      div.id = `valor-${i}`;
+      div.id = `esquecido-${i}`;
 
       div.innerHTML = `
         <h3>Armário ${i}</h3>
-        <input type="text" id="nome-valor-${i}" placeholder="Nome do Paciente" autocomplete="off">
-        <input type="text" id="prontuario-valor-${i}" placeholder="Prontuário" autocomplete="off">
-        <input type="text" id="itens-valor-${i}" placeholder="Itens Guardados" autocomplete="off">
-        <input type="text" id="devolver-valor-${i}" placeholder="Devolvido a">
+        <input type="text" id="nome-esquecido-${i}" placeholder="Nome do Paciente" autocomplete="off">
+        <input type="text" id="prontuario-esquecido-${i}" placeholder="Prontuário" autocomplete="off">
+        <input type="text" id="itens-esquecido-${i}" placeholder="Itens Guardados" autocomplete="off">
+        <div id="status-esquecido-${i}" class="status-info" style="margin: 5px 0; font-size: 0.9em; min-height: 20px;"></div>
         <div class="botoes">
-          <button onclick="window.guardarValor(${i})">📦 Guardar</button>
-          <button onclick="window.devolverValor(${i})">✅ Devolvido</button>
-          <button onclick="window.historicoValor(${i})">📜 Histórico</button>
+          <button onclick="window.guardarEsquecido(${i})">📦 Guardar</button>
+          <button onclick="window.descartarEsquecido(${i})">🗑️ Descartar</button>
         </div>
       `;
+
       container.appendChild(div);
 
-      if (armarios[i]) {
-        document.getElementById(`nome-valor-${i}`).value = armarios[i].nome;
-        document.getElementById(`prontuario-valor-${i}`).value = armarios[i].prontuario;
-        document.getElementById(`itens-valor-${i}`).value = armarios[i].itens;
-        div.classList.add('guardado');
+      if (esquecidos[i]) {
+        document.getElementById(`nome-esquecido-${i}`).value = esquecidos[i].nome || '';
+        document.getElementById(`prontuario-esquecido-${i}`).value = esquecidos[i].prontuario || '';
+        document.getElementById(`itens-esquecido-${i}`).value = esquecidos[i].itens || '';
+        
+        // Lógica de Vencimento (30 dias)
+        // O banco retorna data_guardado como timestamp (inteiro)
+        const dataGuardado = parseInt(esquecidos[i].data_guardado); 
+        const trintaDiasMs = 30 * 24 * 60 * 60 * 1000;
+        const agora = Date.now();
+        const diff = agora - dataGuardado;
+        
+        const statusDiv = document.getElementById(`status-esquecido-${i}`);
+
+        if (diff > trintaDiasMs) {
+            div.classList.add('vencido');
+            div.classList.remove('guardado');
+            statusDiv.innerHTML = '<span style="color:red;font-weight:bold;">⚠️ PRAZO VENCIDO</span>';
+        } else {
+            div.classList.add('guardado');
+            div.classList.remove('vencido');
+            const diasRestantes = Math.ceil((trintaDiasMs - diff) / (1000 * 60 * 60 * 24));
+            statusDiv.innerHTML = `<span style="color:green;">Expira em ${diasRestantes} dias</span>`;
+        }
       }
     }
   }
 
-  window.guardarValor = async (id) => {
-    const nome = document.getElementById(`nome-valor-${id}`).value.trim();
-    const prontuario = document.getElementById(`prontuario-valor-${id}`).value.trim();
-    const itens = document.getElementById(`itens-valor-${id}`).value.trim();
-    
-    if (!nome || !prontuario || !itens) {
-      alert('Preencha todos os campos.');
-      return;
-    }
-
-    const dados = { id, nome, prontuario, itens, data: Date.now() };
-    await window.api.saveValor(dados);
-    await window.api.addHistorico('valor', id, 'Guardou', dados);
-    
-    // Atualiza localmente para feedback rápido
-    armarios[id] = dados;
-    document.getElementById(`valor-${id}`).classList.add('guardado');
-    alert('Item guardado com sucesso!');
-  };
-
-  window.devolverValor = async (id) => {
-    const devolverPara = document.getElementById(`devolver-valor-${id}`).value.trim();
-    if (!devolverPara) {
-      alert('Preencha "Devolvido a" antes de finalizar.');
-      return;
-    }
-
-    const dados = { id, status: 'devolvido', devolver: devolverPara };
-    await window.api.saveValor(dados); // Atualiza status no banco
-    await window.api.addHistorico('valor', id, 'Devolveu', { ...armarios[id], devolvido_a: devolverPara });
-    
-    // Limpa UI
-    delete armarios[id];
-    criarArmarios();
-  };
-
-  window.historicoValor = (id) => window.consultarHistoricoGeral('valor', id); // Usa função genérica se criar, ou adapte a do script.js
+  window.guardarEsquecido = async (id) => {
+    const nome = document.getElementById(`nome-esquecido-${id}`).value.trim();
+    const prontuario = document.getElementById(`prontuario-esquecido-${id}`).value.trim();
+    const itens = document.getElementById(`itens-esquecido-${id}`).value.trim();
   
-  criarArmarios();
+    if (!nome || !prontuario || !itens) {
+      alert('Preencha todos os campos para guardar.');
+      return;
+    }
+  
+    const dados = {
+      id,
+      nome,
+      prontuario,
+      itens,
+      data: Date.now() // Salva timestamp atual
+    };
+  
+    try {
+        await window.api.saveEsquecido(dados);
+        esquecidos[id] = { ...dados, data_guardado: dados.data }; // Atualiza memória local
+        criarArmariosEsquecidos(); // Atualiza UI
+        alert('Item registrado com sucesso.');
+    } catch (err) {
+        console.error(err);
+        alert('Erro ao salvar no banco.');
+    }
+  };
+
+  window.descartarEsquecido = async (id) => {
+    if (confirm("Tem certeza que deseja descartar/entregar este item?")) {
+      try {
+          await window.api.deleteEsquecido(id);
+          delete esquecidos[id];
+          criarArmariosEsquecidos();
+          
+          // Limpa campos
+          document.getElementById(`nome-esquecido-${id}`).value = '';
+          document.getElementById(`prontuario-esquecido-${id}`).value = '';
+          document.getElementById(`itens-esquecido-${id}`).value = '';
+      } catch (err) {
+          console.error(err);
+          alert('Erro ao remover do banco.');
+      }
+    }
+  };
+
+  window.filtrarEsquecidos = () => {
+    const filtro = document.getElementById('search-esquecidos').value.toLowerCase().trim();
+    for (let i = 1; i <= 40; i++) {
+        const div = document.getElementById(`esquecido-${i}`);
+        if (!div) continue;
+        
+        const nome = (document.getElementById(`nome-esquecido-${i}`)?.value || '').toLowerCase();
+        const prontuario = (document.getElementById(`prontuario-esquecido-${i}`)?.value || '').toLowerCase();
+        
+        if (filtro === '' || nome.includes(filtro) || prontuario.includes(filtro)) {
+            div.style.display = 'flex';
+        } else {
+            div.style.display = 'none';
+        }
+    }
+  };
+
+  criarArmariosEsquecidos();
 });
