@@ -178,3 +178,25 @@ window.filtrarArmariosTemporarios = () => {
     }
   }
 };
+
+window.exportarTemporarios = () => {
+    const dados = [];
+    for (let i = 1; i <= 40; i++) {
+        const nome = document.getElementById(`nome-tempo-${i}`)?.value;
+        if (nome) {
+            const cronometro = document.getElementById(`cronometro-tempo-${i}`)?.innerText;
+            dados.push({
+                Armário: i,
+                Nome: nome,
+                Prontuário: document.getElementById(`prontuario-tempo-${i}`)?.value,
+                Tempo_Restante: cronometro
+            });
+        }
+    }
+    if (dados.length === 0) return alert("Nada para exportar.");
+    const ws = XLSX.utils.json_to_sheet(dados);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Temporizados");
+    XLSX.writeFile(wb, "Acolhimento_Tempo.xlsx");
+};
+
