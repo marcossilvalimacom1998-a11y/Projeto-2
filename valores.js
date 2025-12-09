@@ -81,4 +81,58 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.historicoValor = (id) => alert("Funcionalidade de histórico deve ser conectada ao banco."); 
   
   criarArmarios();
+
+  // Substitua a linha do alert window.historicoValor por:
+window.historicoValor = async (id) => {
+    try {
+        const historico = await window.api.getHistorico('valor', id);
+        
+        if (!historico || historico.length === 0) {
+            alert('Nenhum histórico encontrado.');
+            return;
+        }
+
+        const modal = document.getElementById('modal-historico');
+        const texto = document.getElementById('historico-texto');
+        
+        let conteudo = `Histórico de Valores - Armário ${id}:\n\n`;
+        historico.forEach(h => {
+            const det = JSON.parse(h.detalhes);
+            const dataFormatada = new Date(h.data).toLocaleString('pt-BR');
+            conteudo += `[${dataFormatada}] - ${h.acao.toUpperCase()}\n`;
+            conteudo += `Nome: ${det.nome || '-'} | Pront: ${det.prontuario || '-'}\n`;
+            conteudo += `Itens: ${det.itens || '-'}\n`;
+            if (det.devolver) conteudo += `Devolvido a: ${det.devolver}\n`;
+            conteudo += `--------------------------\n`;
+        });
+
+        texto.textContent = conteudo;
+        modal.style.display = 'block';
+    } catch (e) {
+        console.error(e);
+        alert('Erro ao buscar histórico.');
+    }
+};
+
+window.exportarValores = () => {
+    const dados = [];
+    for (let i = 1; i <= 300; i++) {
+        const nome = document.getElementById(`nome-valor-${i}`)?.value;
+        if (nome) {
+            dados.push({
+                Armário: i,
+                Nome: nome,
+                Prontuário: document.getElementById(`prontuario-valor-${i}`)?.value,
+                Itens: document.getElementById(`itens-valor-${i}`)?.value,
+                Status: 'Guardado'
+            });
+        }
+    }
+    if (dados.length === 0) return alert("Nada para exportar.");
+    const ws = XLSX.utils.json_to_sheet(dados);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Valores");
+    XLSX.writeFile(wb, "Pertences_Valor.xlsx");
+};
+
 });
