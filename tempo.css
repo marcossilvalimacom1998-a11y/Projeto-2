@@ -1,0 +1,107 @@
+/* tempo.css - visual profissional para aba de armários com tempo */
+
+#armarios-tempo {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+#armarios-tempo .armario {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-left: 4px solid transparent;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  transition: all 0.3s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#armarios-tempo .armario:hover {
+  transform: translateY(-3px);
+}
+
+#armarios-tempo .armario h3 {
+  color: var(--primary-color);
+  margin-bottom: 0.8rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+#armarios-tempo .armario input {
+  width: 90%;
+  max-width: 220px;
+  padding: 0.6rem;
+  margin-bottom: 0.6rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: 'Inter', sans-serif;
+}
+
+#armarios-tempo .cronometro {
+  font-size: 1rem;
+  font-weight: bold;
+  color: var(--secondary-color);
+  text-align: center;
+  margin: 0.5rem 0;
+}
+
+#armarios-tempo .botoes {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+#armarios-tempo .botoes button {
+  padding: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  transition: background-color 0.3s ease;
+}
+
+#armarios-tempo .botoes button:nth-child(1) {
+  background-color: var(--danger-color);
+}
+
+#armarios-tempo .botoes button:nth-child(2) {
+  background-color: var(--success-color);
+}
+
+#armarios-tempo .botoes button:nth-child(3) {
+  background-color: var(--secondary-color);
+}
+
+#armarios-tempo .armario.emprestado {
+  border-left-color: var(--danger-color);
+  background-color: rgba(231, 76, 60, 0.05);
+}
+
+#armarios-tempo .armario.atrasado {
+  border-left-color: orange;
+  animation: piscar 1s infinite;
+}
+
+@keyframes piscar {
+  0% { background-color: #ffe0e0; }
+  50% { background-color: #ffc8c8; }
+  100% { background-color: #ffe0e0; }
+}
+
+
+@media (max-width: 768px) {
+  #armarios-tempo {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
