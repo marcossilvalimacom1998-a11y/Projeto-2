@@ -21,7 +21,7 @@
     "productName": "Armários Hospitalares Recepção",
     "win": {
       "target": "nsis",
-      "icon": "icone.ico"
+      "icon": "icon.ico"
     },
     "files": [
       "**/*"
