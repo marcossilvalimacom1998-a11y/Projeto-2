@@ -123,4 +123,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
 
   criarArmariosEsquecidos();
+
+window.exportarEsquecidos = () => {
+    const dados = [];
+    for (let i = 1; i <= 40; i++) {
+        const nome = document.getElementById(`nome-esquecido-${i}`)?.value;
+        if (nome) {
+            // Pega o status visual (vencido ou não)
+            const statusDiv = document.getElementById(`status-esquecido-${i}`);
+            const statusTexto = statusDiv?.innerText || 'Ativo';
+            
+            dados.push({
+                Armário: i,
+                Nome: nome,
+                Prontuário: document.getElementById(`prontuario-esquecido-${i}`)?.value,
+                Itens: document.getElementById(`itens-esquecido-${i}`)?.value,
+                Situação: statusTexto.includes('VENCIDO') ? 'VENCIDO' : 'No prazo'
+            });
+        }
+    }
+    if (dados.length === 0) return alert("Nada para exportar.");
+    const ws = XLSX.utils.json_to_sheet(dados);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Esquecidos");
+    XLSX.writeFile(wb, "Itens_Esquecidos.xlsx");
+};
+  
 });
+
